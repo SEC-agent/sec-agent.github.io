@@ -93,7 +93,7 @@ function renderReports(grouped, stats) {
             const isUnknownReward = !report.reward || report.reward === '-' || report.reward === '(unknown)';
             
             row.innerHTML = `
-                <td class="bug-id"><a href="detail.html?id=${report.id}" class="detail-link">${report.id || ''}</a></td>
+                <td class="bug-id">${report.id || ''}</td>
                 <td class="bug-title">
                     <a href="${report.link || '#'}" target="_blank">${report.title || 'Unknown'}</a>
                 </td>
