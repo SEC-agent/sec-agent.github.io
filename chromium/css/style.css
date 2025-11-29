@@ -248,6 +248,18 @@ tbody tr {
     transition: all 0.2s;
 }
 
+.detail-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.detail-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
 tbody tr:hover {
     background: #f8f9fa;
     transform: scale(1.01);

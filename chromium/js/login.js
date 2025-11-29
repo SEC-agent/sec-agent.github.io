@@ -50,7 +50,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     hideAlert();
     
     try {
-        const response = await fetch('../data/c-dataset.bin');
+        const response = await fetch('../data/chromium/dataset.binj');
         if (!response.ok) {
             throw new Error(`Failed to load data: HTTP ${response.status}`);
         }
@@ -60,7 +60,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         
         const data = JSON.parse(decryptedJSON);
         
-        sessionStorage.setItem('decrypted_data', JSON.stringify(data));
+        sessionStorage.setItem('reports_data', JSON.stringify(data));
+        sessionStorage.setItem('decryption_key', password);
         sessionStorage.setItem('authenticated', 'true');
         
         showAlert('✅ Successfully decrypted!', 'success');

@@ -5,7 +5,7 @@ if (sessionStorage.getItem('authenticated') !== 'true') {
     document.querySelector('.container').style.display = 'block';
 }
 
-const reports = JSON.parse(sessionStorage.getItem('decrypted_data') || '[]');
+const reports = JSON.parse(sessionStorage.getItem('reports_data') || '[]');
 
 function groupByYear(reports) {
     const grouped = {};
@@ -93,7 +93,7 @@ function renderReports(grouped, stats) {
             const isUnknownReward = !report.reward || report.reward === '-' || report.reward === '(unknown)';
             
             row.innerHTML = `
-                <td class="bug-id">${report.id || ''}</td>
+                <td class="bug-id"><a href="detail.html?id=${report.id}" class="detail-link">${report.id || ''}</a></td>
                 <td class="bug-title">
                     <a href="${report.link || '#'}" target="_blank">${report.title || 'Unknown'}</a>
                 </td>
