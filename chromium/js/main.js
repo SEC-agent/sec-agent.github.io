@@ -1,7 +1,7 @@
 if (sessionStorage.getItem('authenticated') !== 'true') {
     window.location.href = 'login.html';
 } else {
-    // 인증이 확인되면 콘텐츠를 표시
+    // Show content after authentication
     document.querySelector('.container').style.display = 'block';
 }
 

@@ -75,21 +75,21 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         showAlert('❌ Decryption failed: Invalid key or corrupted data');
         
         submitBtn.disabled = false;
-        submitBtn.textContent = '🔓 Decrypt & Login';
+        submitBtn.textContent = '🔓 Login';
         document.getElementById('password').value = '';
         document.getElementById('password').focus();
     }
 });
 
-// 이미 인증되어 있으면 index.html로 리디렉션
+// Redirect to index.html if already authenticated
 if (sessionStorage.getItem('authenticated') === 'true') {
     window.location.replace('index.html');
 }
 
-// 뒤로 가기로 돌아왔을 때 폼 초기화
+// Reset form when returning via back button
 window.addEventListener('pageshow', function(event) {
     if (event.persisted) {
-        // bfcache에서 복원된 경우
+        // Restored from bfcache
         const form = document.getElementById('loginForm');
         const alert = document.getElementById('alert');
         const submitBtn = form.querySelector('.submit-btn');
