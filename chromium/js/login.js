@@ -80,5 +80,26 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     }
 });
 
+// 이미 인증되어 있으면 index.html로 리디렉션
+if (sessionStorage.getItem('authenticated') === 'true') {
+    window.location.replace('index.html');
+}
+
+// 뒤로 가기로 돌아왔을 때 폼 초기화
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        // bfcache에서 복원된 경우
+        const form = document.getElementById('loginForm');
+        const alert = document.getElementById('alert');
+        const submitBtn = form.querySelector('.submit-btn');
+        
+        form.reset();
+        alert.classList.add('hidden');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '🔓 Login';
+        document.getElementById('password').focus();
+    }
+});
+
 document.getElementById('password').focus();
 
