@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trajectory Detail - Agent Trajectory Viewer</title>
+    <link rel="icon" type="image/svg+xml" href="img/agent.svg">
+    <link rel="stylesheet" href="css/detail.css">
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
+        id="hljs-dark-theme">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css"
+        id="hljs-light-theme" disabled>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- Additional language support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/diff.min.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="back-link">← Back</a>
+                <div class="header-actions">
+                    <button id="themeToggle" class="theme-btn" title="Toggle Theme">☀️</button>
+                    <button id="logoutBtn" class="logout-btn">🔒</button>
+                </div>
+            </div>
+
+            <div class="trajectory-info">
+                <h2 id="trajectoryTitle">Loading...</h2>
+                <div class="info-grid">
+                    <div class="info-item full-width session-date">
+                        <span class="info-label">Session Date</span>
+                        <span class="info-value" id="sessionDate">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Steps</span>
+                        <span class="info-value" id="stepCount">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Duration</span>
+                        <span class="info-value" id="duration">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Input Tokens</span>
+                        <span class="info-value token-input" id="inputTokens">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Output Tokens</span>
+                        <span class="info-value token-output" id="outputTokens">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Cached Tokens</span>
+                        <span class="info-value token-cached" id="cachedTokens">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Total Tokens</span>
+                        <span class="info-value token-total" id="totalTokens">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-navigator">
+                <h3>Steps</h3>
+                <div class="step-list" id="stepList">
+                    <!-- Steps will be populated here -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-header">
+                <div class="step-navigation">
+                    <button id="prevStep" class="nav-btn" disabled>← Previous</button>
+                    <span class="step-indicator" id="stepIndicator">Step 1 of N</span>
+                    <button id="nextStep" class="nav-btn">Next →</button>
+                </div>
+                <div class="view-options">
+                    <button class="view-btn active" data-view="conversation">💬 Conversation</button>
+                    <button class="view-btn" data-view="raw">📄 Raw JSON</button>
+                </div>
+            </div>
+
+            <div class="content-body" id="contentBody">
+                <!-- Task Section (shown at start) -->
+                <div class="task-section" id="taskSection">
+                    <div class="section-header">
+                        <span class="section-icon">📋</span>
+                        <span class="section-title">Task Description</span>
+                    </div>
+                    <div class="task-content markdown-content" id="taskContent">
+                        Loading task...
+                    </div>
+                </div>
+
+                <!-- Step Content -->
+                <div class="step-section" id="stepSection" style="display: none;">
+                    <!-- Timing Info -->
+                    <div class="timing-bar" id="timingBar">
+                        <span class="timing-item">⏱️ Duration: <strong id="stepDuration">-</strong></span>
+                        <span class="timing-item token-input-item">📥 Input: <strong
+                                id="stepInputTokens">-</strong></span>
+                        <span class="timing-item token-output-item">📤 Output: <strong
+                                id="stepOutputTokens">-</strong></span>
+                        <span class="timing-item token-cached-item">💾 Cached: <strong
+                                id="stepCachedTokens">-</strong></span>
+                        <span class="timing-item token-total-item">🔢 Total: <strong id="stepTokens">-</strong></span>
+                    </div>
+
+                    <!-- Thought Section -->
+                    <div class="thought-section" id="thoughtSection">
+                        <div class="section-header">
+                            <span class="section-icon">💭</span>
+                            <span class="section-title">Agent Thinking</span>
+                        </div>
+                        <div class="thought-content" id="thoughtContent">
+                            No thoughts recorded
+                        </div>
+                    </div>
+
+                    <!-- Tool Calls Section -->
+                    <div class="tool-calls-section" id="toolCallsSection">
+                        <div class="section-header">
+                            <span class="section-icon">🛠️</span>
+                            <span class="section-title">Tool Calls</span>
+                        </div>
+                        <div class="tool-calls-list" id="toolCallsList">
+                            No tool calls
+                        </div>
+                    </div>
+
+                    <!-- Observations Section -->
+                    <div class="observations-section" id="observationsSection">
+                        <div class="section-header">
+                            <span class="section-icon">👁️</span>
+                            <span class="section-title">Observations</span>
+                            <div class="section-header-actions">
+                                <label class="lang-selector-label">Syntax:</label>
+                                <select id="observationLang" class="lang-selector">
+                                    <option value="plaintext">Plain Text</option>
+                                    <option value="json">JSON</option>
+                                    <option value="python">Python</option>
+                                    <option value="javascript">JavaScript</option>
+                                    <option value="bash">Bash/Shell</option>
+                                    <option value="markdown">Markdown</option>
+                                    <option value="xml">XML/HTML</option>
+                                    <option value="cpp">C/C++</option>
+                                    <option value="diff">Diff</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="observations-content" id="observationsContent">
+                            No observations
+                        </div>
+                    </div>
+
+                    <!-- Code Action Section -->
+                    <div class="code-action-section" id="codeActionSection">
+                        <div class="section-header">
+                            <span class="section-icon">💻</span>
+                            <span class="section-title">Code Action</span>
+                        </div>
+                        <div class="code-action-content" id="codeActionContent">
+                            No code action
+                        </div>
+                    </div>
+
+                    <!-- Error Section -->
+                    <div class="error-section" id="errorSection">
+                        <div class="section-header error-header">
+                            <span class="section-icon">⚠️</span>
+                            <span class="section-title">Error</span>
+                            <span class="error-type" id="errorType"></span>
+                        </div>
+                        <div class="error-content" id="errorContent">
+                        </div>
+                    </div>
+
+                    <!-- Final Answer / Action Output Section -->
+                    <div class="final-answer-section" id="finalAnswerSection">
+                        <div class="section-header">
+                            <span class="section-icon">✅</span>
+                            <span class="section-title" id="finalAnswerTitle">Final Answer</span>
+                        </div>
+                        <div class="final-answer-content markdown-content" id="finalAnswerContent">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Raw JSON View -->
+                <div class="raw-view" id="rawView" style="display: none;">
+                    <pre id="rawJson"></pre>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="js/detail.js"></script>
+</body>
+
+</html>

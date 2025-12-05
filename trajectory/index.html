@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Trajectory Viewer</title>
+    <link rel="icon" type="image/svg+xml" href="img/agent.svg">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="container" style="display: none;">
+        <header>
+            <div class="header-top">
+                <div class="header-content">
+                    <div class="header-icon"><img src="img/agent.svg" alt="Agent" class="header-icon-img"></div>
+                    <div class="header-text">
+                        <h1>Agent Trajectory Viewer</h1>
+                        <p>Explore AI agent reasoning and tool usage</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="themeToggle" class="theme-btn" title="Toggle Theme">☀️</button>
+                    <button id="logoutBtn" class="logout-btn" title="Logout">🔒</button>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item" id="totalTrajectories">
+                    <span class="stat-value">0</span>
+                    <span class="stat-label">Trajectories</span>
+                </div>
+                <div class="stat-item" id="totalSteps">
+                    <span class="stat-value">0</span>
+                    <span class="stat-label">Total Steps</span>
+                </div>
+                <div class="stat-item" id="totalTokens">
+                    <span class="stat-value">0</span>
+                    <span class="stat-label">Tokens Used</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="toolbar">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="🔍 Search by title or task content..." />
+            </div>
+            <div class="sort-container">
+                <label>Sort by:</label>
+                <select id="sortSelect">
+                    <option value="date-desc">Newest First</option>
+                    <option value="date-asc">Oldest First</option>
+                    <option value="steps-desc">Most Steps</option>
+                    <option value="steps-asc">Fewest Steps</option>
+                    <option value="tokens-desc">Most Tokens</option>
+                    <option value="duration-desc">Longest Duration</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="trajectory-grid" id="trajectoryGrid">
+            <div class="loading">Loading trajectories...</div>
+        </div>
+
+        <footer>
+            <p>Agent Trajectory Viewer • Powered by SEC-agent</p>
+        </footer>
+    </div>
+
+    <div id="notification" class="notification hidden"></div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+
+</html>
