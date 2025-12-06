@@ -336,7 +336,7 @@ const PROVIDER_LOGOS = {
     },
     kimi: {
         patterns: ['kimi', 'moonshot'],
-        logo: 'https://avatars.githubusercontent.com/u/148797551?s=200&v=4',
+        logo: 'https://avatars.githubusercontent.com/u/129152888?s=200&v=4',
         name: 'Moonshot AI'
     }
 };
