@@ -82,7 +82,7 @@ async function decryptData(encryptedBase64, password) {
     }
 }
 
-// Load steps data
+// Load steps data with chunked file support
 async function loadSteps() {
     const password = sessionStorage.getItem('decryption_key');
     if (!password) {
@@ -95,7 +95,34 @@ async function loadSteps() {
         if (!response.ok) {
             throw new Error(`Failed to load steps: HTTP ${response.status}`);
         }
-        const encryptedData = await response.text();
+        const data = await response.text();
+
+        // Check if this is a manifest file (chunked data)
+        let encryptedData;
+        try {
+            const manifest = JSON.parse(data);
+            if (manifest.chunked && manifest.chunks) {
+                // Load all chunks
+                const chunks = [];
+                for (let i = 0; i < manifest.chunks; i++) {
+                    const chunkResponse = await fetch(`../data/trajectory/dataset.bins.${i}`);
+                    if (!chunkResponse.ok) {
+                        throw new Error(`Failed to load chunk ${i}: HTTP ${chunkResponse.status}`);
+                    }
+                    const chunkData = await chunkResponse.text();
+                    chunks.push(chunkData);
+                }
+                // Combine chunks
+                encryptedData = chunks.join('');
+            } else {
+                // Not a manifest, treat as encrypted data
+                encryptedData = data;
+            }
+        } catch (e) {
+            // Not JSON, treat as encrypted data directly
+            encryptedData = data;
+        }
+
         const decryptedJSON = await decryptData(encryptedData, password);
         return JSON.parse(decryptedJSON);
     } catch (error) {
@@ -290,6 +317,47 @@ function formatDate(isoString) {
     }
 }
 
+// Provider logo mapping based on model name patterns
+const PROVIDER_LOGOS = {
+    openai: {
+        patterns: ['gpt', 'openai', 'o1', 'o3', 'davinci', 'codex'],
+        logo: 'https://avatars.githubusercontent.com/u/14957082?s=200&v=4',
+        name: 'OpenAI'
+    },
+    anthropic: {
+        patterns: ['claude', 'anthropic'],
+        logo: 'https://avatars.githubusercontent.com/u/76263028?s=200&v=4',
+        name: 'Anthropic'
+    },
+    google: {
+        patterns: ['gemini', 'google', 'palm', 'bard'],
+        logo: 'https://avatars.githubusercontent.com/u/1342004?s=200&v=4',
+        name: 'Google'
+    },
+    kimi: {
+        patterns: ['kimi', 'moonshot'],
+        logo: 'https://avatars.githubusercontent.com/u/148797551?s=200&v=4',
+        name: 'Moonshot AI'
+    }
+};
+
+// Get provider info based on model name
+function getProviderInfo(modelName) {
+    if (!modelName) return null;
+
+    const lowerModel = modelName.toLowerCase();
+
+    for (const [provider, info] of Object.entries(PROVIDER_LOGOS)) {
+        for (const pattern of info.patterns) {
+            if (lowerModel.includes(pattern)) {
+                return info;
+            }
+        }
+    }
+
+    return null;
+}
+
 // Render sidebar info
 function renderTrajectoryInfo() {
     document.getElementById('trajectoryTitle').textContent = trajectoryMeta.title;
@@ -307,6 +375,17 @@ function renderTrajectoryInfo() {
     if (sessionDateEl && trajectoryMeta.session_timestamp) {
         sessionDateEl.textContent = formatDate(trajectoryMeta.session_timestamp);
     }
+
+    // Update model badge with provider logo if available
+    const modelBadge = document.getElementById('modelBadge');
+    if (modelBadge && trajectoryMeta.model) {
+        const providerInfo = getProviderInfo(trajectoryMeta.model);
+        if (providerInfo) {
+            modelBadge.innerHTML = `<img src="${providerInfo.logo}" alt="${providerInfo.name}" class="model-badge-logo" onerror="this.style.display='none'"> ${escapeHtml(trajectoryMeta.model)}`;
+        } else {
+            modelBadge.textContent = trajectoryMeta.model;
+        }
+    }
 }
 
 // Get tool names from step
@@ -320,6 +399,58 @@ function getToolNames(step) {
     });
     // Return unique tool names
     return [...new Set(names)];
+}
+
+// Current filter term
+let currentFilter = '';
+
+// Filter steps by tool name
+function filterSteps(filterTerm) {
+    currentFilter = filterTerm.toLowerCase().trim();
+    const stepItems = document.querySelectorAll('.step-item:not(.task-step)');
+    const clearBtn = document.getElementById('clearFilterBtn');
+    let matchCount = 0;
+
+    // Show/hide clear button
+    if (clearBtn) {
+        clearBtn.classList.toggle('visible', currentFilter.length > 0);
+    }
+
+    stepItems.forEach((item, index) => {
+        if (!currentFilter) {
+            // No filter - show all
+            item.classList.remove('filtered-out', 'filter-match');
+            matchCount++;
+            return;
+        }
+
+        const step = steps[index];
+        const toolNames = getToolNames(step);
+        const toolNamesStr = (toolNames || []).join(' ').toLowerCase();
+
+        // Check if any tool name matches the filter
+        const matches = toolNamesStr.includes(currentFilter);
+
+        item.classList.toggle('filtered-out', !matches);
+        item.classList.toggle('filter-match', matches);
+
+        if (matches) matchCount++;
+    });
+
+    // Update step count badge
+    updateStepCountBadge(matchCount);
+}
+
+// Update step count badge
+function updateStepCountBadge(count) {
+    const badge = document.getElementById('stepCountBadge');
+    if (badge) {
+        if (currentFilter) {
+            badge.textContent = `${count}/${steps.length}`;
+        } else {
+            badge.textContent = steps.length;
+        }
+    }
 }
 
 // Render step list in sidebar
@@ -378,6 +509,9 @@ function renderStepList() {
             stepItem.classList.add('has-error');
         }
 
+        // Store tool names as data attribute for filtering
+        stepItem.dataset.tools = (toolNames || []).join(',').toLowerCase();
+
         stepItem.innerHTML = `
             <div class="step-number">${stepLabel}</div>
             <div class="step-preview">${escapeHtml(preview)}</div>
@@ -389,6 +523,14 @@ function renderStepList() {
         stepItem.addEventListener('click', () => selectStep(index));
         stepList.appendChild(stepItem);
     });
+
+    // Update step count badge
+    updateStepCountBadge(steps.length);
+
+    // Re-apply filter if there was one
+    if (currentFilter) {
+        filterSteps(currentFilter);
+    }
 }
 
 // Select and display a step
@@ -408,6 +550,12 @@ async function selectStep(index) {
         await showTaskContent();
     } else {
         await showStepContent(steps[index]);
+    }
+
+    // Scroll content area to top
+    const contentBody = document.getElementById('contentBody');
+    if (contentBody) {
+        contentBody.scrollTop = 0;
     }
 }
 
@@ -682,6 +830,30 @@ document.getElementById('observationLang').addEventListener('change', (e) => {
         renderObservations(currentStepData);
     }
 });
+
+// Step filter
+const stepFilterInput = document.getElementById('stepFilterInput');
+const clearFilterBtn = document.getElementById('clearFilterBtn');
+
+if (stepFilterInput) {
+    stepFilterInput.addEventListener('input', (e) => {
+        filterSteps(e.target.value);
+    });
+
+    // Prevent keyboard navigation when typing in filter
+    stepFilterInput.addEventListener('keydown', (e) => {
+        e.stopPropagation();
+    });
+}
+
+if (clearFilterBtn) {
+    clearFilterBtn.addEventListener('click', () => {
+        if (stepFilterInput) {
+            stepFilterInput.value = '';
+        }
+        filterSteps('');
+    });
+}
 
 // Keyboard navigation
 document.addEventListener('keydown', async (e) => {

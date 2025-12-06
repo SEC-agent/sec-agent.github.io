@@ -242,17 +242,20 @@ header::before {
     box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
 }
 
+.filter-container,
 .sort-container {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
+.filter-container label,
 .sort-container label {
     color: var(--text-secondary);
     font-size: 0.95em;
 }
 
+.filter-container select,
 .sort-container select {
     padding: 15px 20px;
     background: var(--bg-card);
@@ -265,6 +268,7 @@ header::before {
     transition: all 0.3s ease;
 }
 
+.filter-container select:focus,
 .sort-container select:focus {
     outline: none;
     border-color: var(--accent-cyan);
@@ -331,6 +335,20 @@ header::before {
     flex-shrink: 0;
 }
 
+.card-icon-img {
+    width: 28px;
+    height: 28px;
+    filter: brightness(0) invert(1);
+}
+
+.card-icon-img.provider-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    filter: none;
+    object-fit: cover;
+}
+
 .card-title {
     flex: 1;
     min-width: 0;
@@ -347,10 +365,30 @@ header::before {
     overflow: hidden;
 }
 
+.card-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
 .card-title .card-id {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.85em;
     color: var(--text-muted);
+}
+
+.card-model-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7em;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .card-preview {

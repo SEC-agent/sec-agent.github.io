@@ -41,6 +41,37 @@ function hideAlert() {
     alert.classList.add('hidden');
 }
 
+// Load data with chunked file support
+async function loadEncryptedData(basePath) {
+    const response = await fetch(basePath);
+    if (!response.ok) {
+        throw new Error(`Failed to load data: HTTP ${response.status}`);
+    }
+    const data = await response.text();
+    
+    // Check if this is a manifest file (chunked data)
+    try {
+        const manifest = JSON.parse(data);
+        if (manifest.chunked && manifest.chunks) {
+            // Load all chunks
+            const chunks = [];
+            for (let i = 0; i < manifest.chunks; i++) {
+                const chunkResponse = await fetch(`${basePath}.${i}`);
+                if (!chunkResponse.ok) {
+                    throw new Error(`Failed to load chunk ${i}: HTTP ${chunkResponse.status}`);
+                }
+                const chunkData = await chunkResponse.text();
+                chunks.push(chunkData);
+            }
+            // Combine chunks
+            return chunks.join('');
+        }
+    } catch (e) {
+        // Not JSON manifest, return as-is
+    }
+    return data;
+}
+
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -52,12 +83,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     hideAlert();
     
     try {
-        // Try to load and decrypt the trajectory metadata
-        const response = await fetch('../data/trajectory/dataset.binj');
-        if (!response.ok) {
-            throw new Error(`Failed to load data: HTTP ${response.status}`);
-        }
-        const encryptedData = await response.text();
+        // Try to load and decrypt the trajectory metadata (with chunked support)
+        const encryptedData = await loadEncryptedData('../data/trajectory/dataset.binj');
         
         const decryptedJSON = await decryptData(encryptedData, password);
         

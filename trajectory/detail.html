@@ -37,7 +37,10 @@
             </div>
 
             <div class="trajectory-info">
-                <h2 id="trajectoryTitle">Loading...</h2>
+                <div class="trajectory-header">
+                    <h2 id="trajectoryTitle">Loading...</h2>
+                    <span class="model-badge" id="modelBadge"></span>
+                </div>
                 <div class="info-grid">
                     <div class="info-item full-width session-date">
                         <span class="info-label">Session Date</span>
@@ -71,7 +74,14 @@
             </div>
 
             <div class="step-navigator">
-                <h3>Steps</h3>
+                <div class="step-navigator-header">
+                    <h3>Steps</h3>
+                    <span class="step-count-badge" id="stepCountBadge">0</span>
+                </div>
+                <div class="step-filter">
+                    <input type="text" id="stepFilterInput" placeholder="🔍 Filter by tool name..." />
+                    <button id="clearFilterBtn" class="clear-filter-btn" title="Clear filter">×</button>
+                </div>
                 <div class="step-list" id="stepList">
                     <!-- Steps will be populated here -->
                 </div>

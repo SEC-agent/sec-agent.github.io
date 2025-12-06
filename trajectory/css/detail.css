@@ -132,15 +132,45 @@ body {
     border-bottom: 1px solid var(--border-color);
 }
 
+.trajectory-header {
+    margin-bottom: 15px;
+}
+
 .trajectory-info h2 {
     font-size: 1.1em;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+.model-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7em;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.model-badge:empty {
+    display: none;
+}
+
+.model-badge-logo {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    object-fit: cover;
 }
 
 .info-grid {
@@ -204,13 +234,96 @@ body {
     padding: 20px;
 }
 
+/* Step Navigator Header */
+.step-navigator-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
 .step-navigator h3 {
     font-size: 0.9em;
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 15px;
+    margin: 0;
+}
+
+.step-count-badge {
+    background: var(--accent-cyan);
+    color: var(--bg-primary);
+    font-size: 0.75em;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* Step Filter */
+.step-filter {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.step-filter input {
+    width: 100%;
+    padding: 10px 35px 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.85em;
+    transition: all 0.2s;
+}
+
+.step-filter input:focus {
+    outline: none;
+    border-color: var(--accent-cyan);
+    background: var(--bg-hover);
+}
+
+.step-filter input::placeholder {
+    color: var(--text-muted);
+}
+
+.clear-filter-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    background: var(--bg-secondary);
+    border: none;
+    border-radius: 50%;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1em;
+    line-height: 1;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.clear-filter-btn.visible {
+    display: flex;
+}
+
+.clear-filter-btn:hover {
+    background: var(--accent-red);
+    color: white;
+}
+
+/* Filtered step item */
+.step-item.filtered-out {
+    display: none;
+}
+
+.step-item.filter-match {
+    border-left: 3px solid var(--accent-cyan);
 }
 
 .step-list {

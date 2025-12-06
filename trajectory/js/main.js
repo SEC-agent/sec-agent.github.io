@@ -81,10 +81,10 @@ function truncateText(text, maxLength = 150) {
     if (!text) return '';
     // Remove markdown formatting for preview
     text = text.replace(/#+\s*/g, '')
-               .replace(/\*\*/g, '')
-               .replace(/`/g, '')
-               .replace(/\n+/g, ' ')
-               .trim();
+        .replace(/\*\*/g, '')
+        .replace(/`/g, '')
+        .replace(/\n+/g, ' ')
+        .trim();
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength).trim() + '...';
 }
@@ -96,17 +96,87 @@ function calculateStats() {
     const totalTokens = trajectories.reduce((sum, t) => {
         return sum + (t.total_tokens?.total_tokens || 0);
     }, 0);
-    
+
     return { totalTrajectories, totalSteps, totalTokens };
+}
+
+// Get unique models from trajectories
+function getUniqueModels() {
+    const models = new Set();
+    trajectories.forEach(t => {
+        if (t.model) {
+            models.add(t.model);
+        }
+    });
+    return Array.from(models).sort();
+}
+
+// Populate model filter dropdown
+function populateModelFilter() {
+    const modelFilter = document.getElementById('modelFilter');
+    if (!modelFilter) return;
+
+    const models = getUniqueModels();
+
+    // Clear existing options except "All Models"
+    modelFilter.innerHTML = '<option value="">All Models</option>';
+
+    models.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model;
+        option.textContent = model;
+        modelFilter.appendChild(option);
+    });
 }
 
 // Render statistics in header
 function renderStats() {
     const stats = calculateStats();
-    
+
     document.querySelector('#totalTrajectories .stat-value').textContent = formatNumber(stats.totalTrajectories);
     document.querySelector('#totalSteps .stat-value').textContent = formatNumber(stats.totalSteps);
     document.querySelector('#totalTokens .stat-value').textContent = formatNumber(stats.totalTokens);
+}
+
+// Provider logo mapping based on model name patterns
+const PROVIDER_LOGOS = {
+    openai: {
+        patterns: ['gpt', 'openai', 'o1', 'o3', 'davinci', 'codex'],
+        logo: 'https://avatars.githubusercontent.com/u/14957082?s=200&v=4',
+        name: 'OpenAI'
+    },
+    anthropic: {
+        patterns: ['claude', 'anthropic'],
+        logo: 'https://avatars.githubusercontent.com/u/76263028?s=200&v=4',
+        name: 'Anthropic'
+    },
+    google: {
+        patterns: ['gemini', 'google', 'palm', 'bard'],
+        logo: 'https://avatars.githubusercontent.com/u/1342004?s=200&v=4',
+        name: 'Google'
+    },
+    kimi: {
+        patterns: ['kimi', 'moonshot'],
+        logo: 'https://avatars.githubusercontent.com/u/129152888?s=200&v=4',
+        name: 'Moonshot AI'
+    }
+};
+
+// Get provider info based on model name
+function getProviderInfo(modelName) {
+    if (!modelName) return null;
+
+    const lowerModel = modelName.toLowerCase();
+
+    for (const [provider, info] of Object.entries(PROVIDER_LOGOS)) {
+        for (const pattern of info.patterns) {
+            if (lowerModel.includes(pattern)) {
+                return info;
+            }
+        }
+    }
+
+    return null;
 }
 
 // Create trajectory card HTML
@@ -114,17 +184,30 @@ function createTrajectoryCard(trajectory) {
     const card = document.createElement('div');
     card.className = 'trajectory-card';
     card.setAttribute('data-id', trajectory.id);
-    
+
     const taskPreview = truncateText(trajectory.task);
     const totalTokens = trajectory.total_tokens?.total_tokens || 0;
     const sessionDate = formatDate(trajectory.session_timestamp);
-    
+
+    const modelBadge = trajectory.model
+        ? `<span class="card-model-badge">${escapeHtml(trajectory.model)}</span>`
+        : '';
+
+    // Get provider logo
+    const providerInfo = getProviderInfo(trajectory.model);
+    const cardIcon = providerInfo
+        ? `<img src="${providerInfo.logo}" alt="${providerInfo.name}" class="card-icon-img provider-logo" onerror="this.onerror=null; this.src='img/agent.svg'; this.classList.remove('provider-logo');">`
+        : `<img src="img/agent.svg" alt="Agent" class="card-icon-img">`;
+
     card.innerHTML = `
         <div class="card-header">
-            <div class="card-icon">🤖</div>
+            <div class="card-icon">${cardIcon}</div>
             <div class="card-title">
                 <h3>${escapeHtml(trajectory.title)}</h3>
-                <span class="card-id">${trajectory.id}</span>
+                <div class="card-meta-row">
+                    <span class="card-id">${trajectory.id}</span>
+                    ${modelBadge}
+                </div>
             </div>
         </div>
         <div class="card-preview">
@@ -148,12 +231,12 @@ function createTrajectoryCard(trajectory) {
         </div>
         ${sessionDate ? `<div class="card-date">📅 ${sessionDate}</div>` : ''}
     `;
-    
+
     // Navigate to detail page on click
     card.addEventListener('click', () => {
         window.location.href = `detail.html?id=${encodeURIComponent(trajectory.id)}`;
     });
-    
+
     return card;
 }
 
@@ -169,12 +252,12 @@ function escapeHtml(text) {
 function renderTrajectories(trajectoriesToRender) {
     const grid = document.getElementById('trajectoryGrid');
     grid.innerHTML = '';
-    
+
     if (trajectoriesToRender.length === 0) {
         grid.innerHTML = '<div class="no-results">No trajectories found</div>';
         return;
     }
-    
+
     trajectoriesToRender.forEach(trajectory => {
         grid.appendChild(createTrajectoryCard(trajectory));
     });
@@ -183,10 +266,10 @@ function renderTrajectories(trajectoriesToRender) {
 // Sort trajectories based on selected option
 function sortTrajectories(trajectories, sortBy) {
     const sorted = [...trajectories];
-    
+
     // Helper to get sort timestamp
     const getTimestamp = (t) => t.session_timestamp || t.created_at || '';
-    
+
     switch (sortBy) {
         case 'date-desc':
             sorted.sort((a, b) => getTimestamp(b).localeCompare(getTimestamp(a)));
@@ -213,38 +296,47 @@ function sortTrajectories(trajectories, sortBy) {
         default:
             break;
     }
-    
+
     return sorted;
 }
 
 // Filter trajectories based on search term
 function filterTrajectories(trajectories, searchTerm) {
     if (!searchTerm) return trajectories;
-    
+
     const term = searchTerm.toLowerCase();
     return trajectories.filter(t => {
         const title = (t.title || '').toLowerCase();
         const task = (t.task || '').toLowerCase();
         const id = (t.id || '').toLowerCase();
-        
+
         return title.includes(term) || task.includes(term) || id.includes(term);
     });
+}
+
+// Filter trajectories by model
+function filterByModel(trajectories, model) {
+    if (!model) return trajectories;
+    return trajectories.filter(t => t.model === model);
 }
 
 // Apply filters and sorting, then render
 function applyFiltersAndRender() {
     const searchTerm = document.getElementById('searchInput').value;
     const sortBy = document.getElementById('sortSelect').value;
-    
+    const modelFilter = document.getElementById('modelFilter')?.value || '';
+
     let filtered = filterTrajectories(trajectories, searchTerm);
+    filtered = filterByModel(filtered, modelFilter);
     let sorted = sortTrajectories(filtered, sortBy);
-    
+
     renderTrajectories(sorted);
 }
 
 // Event listeners
 document.getElementById('searchInput').addEventListener('input', applyFiltersAndRender);
 document.getElementById('sortSelect').addEventListener('change', applyFiltersAndRender);
+document.getElementById('modelFilter')?.addEventListener('change', applyFiltersAndRender);
 
 // Theme toggle
 document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
@@ -260,7 +352,7 @@ function showNotification(message, isError = false) {
     const notification = document.getElementById('notification');
     notification.textContent = message;
     notification.className = 'notification' + (isError ? ' error' : '');
-    
+
     setTimeout(() => {
         notification.classList.add('hidden');
     }, 3000);
@@ -268,5 +360,6 @@ function showNotification(message, isError = false) {
 
 // Initial render
 renderStats();
+populateModelFilter();
 applyFiltersAndRender();
 
